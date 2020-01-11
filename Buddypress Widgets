@@ -1,0 +1,66 @@
+<?php
+class BP_Custom_User_Ids {
+    
+    private $custom_ids = array();
+    
+    public function __construct() {
+        
+        $this->custom_ids = $this->get_custom_ids();
+        
+        add_action( 'bp_pre_user_query_construct',  array( $this, 'custom_members_query' ), 1, 1 );
+        add_filter( 'bp_get_total_member_count',    array( $this, 'custom_members_count' ), 1, 1 );
+        
+    }
+    
+    private function get_custom_ids() {
+        global $wpdb;
+        
+        // figure out if the logged-in user is man or woman
+        // CHANGE FIELD id "3" BELOW
+        $gender = xprofile_get_field_data( 3, bp_loggedin_user_id() );
+        
+        if ( $gender == 'Man' )
+            // CHANGE FIELD id "3" BELOW
+            $query = "SELECT user_id FROM {$wpdb->prefix}bp_xprofile_data WHERE field_id = 3 AND value = 'Woman'";
+            else
+                // CHANGE FIELD id "3" BELOW
+                $query = "SELECT user_id FROM {$wpdb->prefix}bp_xprofile_data WHERE field_id = 3 AND value = 'Man'";
+                
+                
+                $custom_ids = $wpdb->get_col( $query );
+                
+                
+                return $custom_ids;
+    }
+    
+    function custom_members_query( $query_array ) {
+        
+        $query_array->query_vars['include'] = $this->custom_ids;
+        
+    }
+    
+    function custom_members_count ( $count ) {
+        
+        $new_count = count( $this->custom_ids );
+        return $new_count;
+        
+    }
+}
+
+function custom_user_ids( ) {
+    
+    // Don't do this for the admin
+    if(!current_user_can('administrator') ) {
+        new BP_Custom_User_Ids ();
+    }
+    
+}
+
+// WORKS FOR DIRECTORY NOT WIDGETS
+// add_action( 'bp_before_directory_members', 'custom_user_ids' );
+
+// EITHER OF THESE WORKS FOR WIDGETS BUT NOT DIRESCTORY
+//add_action( 'bp_pre_user_query', 'custom_user_ids' );
+// add_action( 'bp_pre_user_query_construct', 'custom_user_ids' );
+add_action( 'bp_pre_user_query_construct', 'custom_user_ids' );
+?>
